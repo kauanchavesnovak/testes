@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minhas Finanças</title>
+<style>
+:root{--bg:#f1f5fb;--card:#fff;--tx:#0f1b33;--mu:#64708a;--pr:#1d4ed8;--pr2:#3b82f6;--soft:#e3ecff;--bd:#dbe3f3;--ok:#0f9d58;--bad:#d93025;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1220;--card:#131c30;--tx:#e8eefc;--mu:#93a1c0;--pr:#4f8cff;--pr2:#2f6be6;--soft:#1a2a4d;--bd:#223256;--ok:#3ddc84;--bad:#ff6b6b}}
+:root[data-theme="dark"]{--bg:#0b1220;--card:#131c30;--tx:#e8eefc;--mu:#93a1c0;--pr:#4f8cff;--pr2:#2f6be6;--soft:#1a2a4d;--bd:#223256;--ok:#3ddc84;--bad:#ff6b6b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:84px}
+header{background:linear-gradient(135deg,var(--pr),var(--pr2));color:#fff;padding:18px 16px 56px;border-radius:0 0 24px 24px}
+header h1{margin:0;font-size:20px}header p{margin:2px 0 0;opacity:.85;font-size:13px}
+main{max-width:720px;margin:-40px auto 0;padding:0 14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.k{font-size:12px;color:var(--mu)}.v{font-size:19px;font-weight:700;margin-top:2px}
+.big .v{font-size:28px;color:var(--pr)}
+.pos{color:var(--ok)}.neg{color:var(--bad)}
+h2{font-size:16px;margin:4px 0 10px;display:flex;justify-content:space-between;align-items:center}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:8px 12px;background:var(--pr);color:#fff;font-weight:600}
+button.mn{background:#ffffff33;font-size:18px;padding:2px 12px}button.ghost{background:var(--soft);color:var(--pr)}button.x{background:none;color:var(--mu);padding:6px 10px;font-size:16px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd);align-items:center}
+.row:last-child{border:0}.row small{color:var(--mu);display:block}
+.tag{display:inline-block;background:var(--soft);color:var(--pr);border-radius:20px;padding:1px 8px;font-size:11px;margin-right:4px}
+.bar{height:8px;background:var(--soft);border-radius:8px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;background:var(--pr2)}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--bd);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav button{flex:1;background:none;color:var(--mu);border-radius:0;padding:9px 2px;font-size:10px;font-weight:500}
+nav button span{display:block;font-size:19px}nav button.on{color:var(--pr);font-weight:700}
+#m{position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;justify-content:center;z-index:9}
+#m.on{display:flex}#m form{background:var(--card);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:16px;max-height:90%;overflow:auto}
+label{display:block;font-size:12px;color:var(--mu);margin:8px 0 3px}
+input,select{width:100%;font:inherit;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)}
+.seg{display:flex;gap:6px}.seg button{flex:1}
+.empty{color:var(--mu);text-align:center;padding:14px}
+pre{white-space:pre-wrap;font:inherit;margin:8px 0 0}
+</style></head><body>
+<header><h1>💙 Minhas Finanças</h1><p id="hd" style="display:flex;align-items:center;gap:10px;margin-top:8px"></p></header>
+<main id="app"></main>
+<nav id="nav"></nav>
+<div id="m"><form id="f"></form></div>
+<script>
+const CATS=["Alimentação","Transporte","Moradia","Lazer","Saúde","Educação","Compras","Assinaturas","Salário","Outros"];
+const INVS=["CDI","CDB","Tesouro Direto","LCI/LCA","Poupança","Ações","FIIs","Cripto","Outro"];
+let S={mov:[],cards:[],goals:[],inv:[]},tab="home",sample=null,ai="";
+try{S=Object.assign(S,JSON.parse(localStorage.getItem("fin")||"{}"))}catch(e){}
+const save=()=>{try{localStorage.setItem("fin",JSON.stringify(S))}catch(e){}};
+const $=s=>document.querySelector(s),R=n=>(+n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const id=()=>Math.random().toString(36).slice(2,9),today=()=>new Date().toISOString().slice(0,10);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fd=d=>d?d.split("-").reverse().join("/"):"";
+let ym=today().slice(0,7);
+const mi=d=>{const[a,b]=d.slice(0,7).split("-");return +a*12+ +b};
+const MN=()=>mi(ym+"-01");
+const amt=(m,y)=>{const n=m.p||1,t=mi(m.d);return y>=t&&y<t+n?m.v/n:0};
+const cum=(m,y)=>{const n=m.p||1,t=mi(m.d);return m.v/n*Math.max(0,Math.min(n,y-t+1))};
+function shift(n){const y=MN()-1+n;ym=Math.floor(y/12)+"-"+String(y%12+1).padStart(2,"0");render()}
+function tot(){const y=MN(),f=(t,g)=>S.mov.filter(m=>m.t==t).reduce((a,m)=>a+g(m,y),0);
+const res=S.inv.filter(i=>i.g=="Reserva").reduce((a,i)=>a+i.v,0),inv=S.inv.filter(i=>i.g=="Investimento").reduce((a,i)=>a+i.v,0);
+const rec=f("in",amt),des=f("out",amt);return{rec,des,res,inv,sal:f("in",cum)-f("out",cum)-res-inv}}
+const TABS=[["home","🏠","Início"],["mov","↕️","Movim."],["cards","💳","Cartões"],["res","🏦","Reservas"],["goals","🎯","Metas"],["tips","💡","Dicas"]];
+function render(){const t=tot();{const y0=MN()-1,lb=new Date(Math.floor(y0/12),y0%12,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}),c=ym.localeCompare(today().slice(0,7));
+$("#hd").innerHTML=`<button class="mn" onclick="shift(-1)">‹</button><b style="min-width:150px;text-align:center;text-transform:capitalize">${lb}</b><button class="mn" onclick="shift(1)">›</button>${c>0?'<span class="tag">Futuro</span>':c<0?'<span class="tag">Passado</span>':'<span class="tag">Mês atual</span>'}`}
+$("#nav").innerHTML=TABS.map(([k,i,n])=>`<button class="${tab==k?"on":""}" onclick="tab='${k}';render()"><span>${i}</span>${n}</button>`).join("");
+$("#app").innerHTML=({home,mov,cards,res,goals,tips})[tab](t)}
+function home(t){const by={};S.mov.filter(m=>m.t=="out").forEach(m=>by[m.c]=(by[m.c]||0)+amt(m,MN()));const e=Object.entries(by).sort((a,b)=>b[1]-a[1]).slice(0,5),mx=e[0]?.[1]||1;
+return`<div class="card big"><div class="k">Saldo disponível (acumulado até o mês)</div><div class="v ${t.sal<0?"neg":""}">${R(t.sal)}</div></div>
+<div class="grid"><div class="card"><div class="k">Receita</div><div class="v pos">${R(t.rec)}</div></div><div class="card"><div class="k">Despesa</div><div class="v neg">${R(t.des)}</div></div>
+<div class="card"><div class="k">Reserva</div><div class="v">${R(t.res)}</div></div><div class="card"><div class="k">Investimento</div><div class="v">${R(t.inv)}</div></div></div>
+<div class="card"><h2>Gastos por categoria</h2>${e.length?e.map(([c,v])=>`<div><div class="row" style="border:0;padding:2px 0"><span>${esc(c)}</span><b>${R(v)}</b></div><div class="bar"><i style="width:${v/mx*100}%"></i></div></div>`).join(""):'<div class="empty">Sem despesas ainda</div>'}</div>
+<div class="grid"><button onclick="addMov('in')">+ Entrada</button><button onclick="addMov('out')">− Saída</button></div>`}
+function mov(){const y=MN(),l=S.mov.filter(m=>amt(m,y)>0).sort((a,b)=>b.d.localeCompare(a.d));
+return`<div class="card"><h2>Movimentações <span><button class="ghost" onclick="addMov('in')">+ Entrada</button> <button onclick="addMov('out')">+ Saída</button></span></h2>
+${l.length?l.map(m=>{const cd=S.cards.find(c=>c.id==m.card),n=m.p||1,k=y-mi(m.d)+1;return`<div class="row"><div><b>${esc(m.desc||m.c)}</b><small><span class="tag">${esc(m.c)}</span><span class="tag">${esc(m.f)}</span>${cd?esc(cd.n)+(n>1?" · parcela "+k+"/"+n+" (total "+R(m.v)+")":""):""} · ${fd(m.d)}</small></div>
+<div><b class="${m.t=="in"?"pos":"neg"}">${m.t=="in"?"+":"−"}${R(amt(m,y))}</b><button class="x" onclick="del('mov','${m.id}')">🗑️</button></div></div>`}).join(""):'<div class="empty">Nenhuma movimentação neste mês</div>'}</div>`}
+function cards(){return`<div class="card"><h2>Cartões de crédito <button onclick="addCard()">+ Cartão</button></h2>
+${S.cards.length?S.cards.map(c=>{const u=S.mov.filter(m=>m.card==c.id).reduce((a,m)=>a+m.v,0),p=Math.min(100,u/c.l*100);
+return`<div class="row" style="display:block"><div style="display:flex;justify-content:space-between"><b>💳 ${esc(c.n)}</b><button class="x" onclick="del('cards','${c.id}')">🗑️</button></div>
+<small class="k">Vence dia ${c.dv} · Limite ${R(c.l)}</small><div class="bar"><i style="width:${p}%"></i></div>
+<div style="display:flex;justify-content:space-between"><span class="k">Usado ${R(u)} · Disponível ${R(c.l-u)}</span><button class="ghost" onclick="addMov('out','${c.id}')">Lançar compra</button></div></div>`}).join(""):'<div class="empty">Cadastre seu primeiro cartão</div>'}</div>`}
+function res(t){const sec=(g,tt)=>`<div class="card"><h2>${tt} · ${R(g=="Reserva"?t.res:t.inv)}<button onclick="addInv('${g}')">+ Adicionar</button></h2>${S.inv.filter(i=>i.g==g).map(i=>`<div class="row"><div><b>${esc(i.n)}</b><small><span class="tag">${esc(i.tp)}</span>${esc(i.tx||"")}</small></div><div><b>${R(i.v)}</b><button class="x" onclick="del('inv','${i.id}')">🗑️</button></div></div>`).join("")||'<div class="empty">Nada por aqui</div>'}</div>`;
+return sec("Reserva","Reservas")+sec("Investimento","Investimentos")}
+function goals(){return`<div class="card"><h2>Metas e desejos <button onclick="addGoal()">+ Novo</button></h2>
+${S.goals.length?S.goals.map(g=>{const p=Math.min(100,g.s/g.v*100);return`<div class="row" style="display:block"><div style="display:flex;justify-content:space-between"><b>${g.tp=="Meta"?"🎯":"✨"} ${esc(g.n)}</b><button class="x" onclick="del('goals','${g.id}')">🗑️</button></div>
+<div class="bar"><i style="width:${p}%"></i></div><div style="display:flex;justify-content:space-between;align-items:center"><span class="k">${R(g.s)} de ${R(g.v)} (${p.toFixed(0)}%)${g.pz?" · até "+fd(g.pz):""}</span><button class="ghost" onclick="addSaved('${g.id}')">+ Guardar</button></div></div>`}).join(""):'<div class="empty">Cadastre metas e desejos</div>'}</div>`}
+const TIPS=["Regra 50/30/20: 50% necessidades, 30% desejos e 20% para reserva e investimentos.","Monte primeiro a reserva de emergência (3 a 6 meses de gastos) e deixe em algo com liquidez diária, como CDB 100% do CDI.","Evite parcelar sem juros em excesso: parcelas somadas comprometem a renda dos meses seguintes.","Mantenha o uso do cartão abaixo de 30% do limite.","Pague-se primeiro: separe o valor de reserva/investimento assim que a receita cair."];
+function tips(t){return`<div class="card"><h2>Dicas financeiras</h2>${TIPS.map(x=>`<div class="row">💡 <span>${x}</span></div>`).join("")}</div>
+<div class="card"><h2>Dicas com IA ${sample?'<button id="ia" onclick="askAI()">Gerar dicas</button>':""}</h2><div class="k">${sample?"A IA analisa seus totais e sugere ajustes personalizados.":"IA indisponível neste momento."}</div><pre id="aiout">${esc(ai)}</pre></div>`}
+async function askAI(){const t=tot(),by={};S.mov.filter(m=>m.t=="out").forEach(m=>by[m.c]=(by[m.c]||0)+amt(m,MN()));
+const lim=S.cards.reduce((a,c)=>a+c.l,0),us=S.mov.filter(m=>m.card).reduce((a,m)=>a+m.v,0);
+const o=$("#aiout");o.textContent="Pensando...";
+try{const r=await sample(`Você é um consultor financeiro amigável. Em português do Brasil, dê de 4 a 6 dicas curtas, práticas e personalizadas com base nestes dados (R$): receita ${t.rec}, despesa ${t.des}, reserva ${t.res}, investimento ${t.inv}, saldo disponível ${t.sal}, gastos por categoria ${JSON.stringify(by)}, limite de cartões ${lim}, usado no cartão ${us}, metas ${S.goals.length}. Se faltarem dados, diga o que cadastrar. Sem markdown pesado. Lembre que não é aconselhamento financeiro profissional.`,{onText:({text})=>{ai=text;o.textContent=text}});ai=r.text;o.textContent=ai}catch(e){o.textContent="Não foi possível gerar agora."}}
+function box(h,body){const f=$("#f");f.innerHTML=`<h2>${h}</h2>${body}`;f.oninput=null;f.onsubmit=e=>e.preventDefault();$("#m").classList.add("on")}
+function alert(m){box(esc(m),`<button type="button" style="width:100%" onclick="$('#m').classList.remove('on')">OK</button>`)}
+function del(k,i){box("Remover este item?",`<div class="seg"><button type="button" class="ghost" onclick="$('#m').classList.remove('on')">Cancelar</button><button type="button" style="background:var(--bad)" onclick="S['${k}']=S['${k}'].filter(x=>x.id!='${i}');save();$('#m').classList.remove('on');render()">Remover</button></div>`)}
+/* formulário genérico */
+function form(title,fields,ok){const f=$("#f");f.innerHTML=`<h2>${title}</h2>`+fields.map(x=>`<div data-k="${x.k}"><label>${x.l}</label>${x.o?`<select name="${x.k}">${x.o.map(o=>Array.isArray(o)?`<option value="${o[0]}">${esc(o[1])}</option>`:`<option>${esc(o)}</option>`).join("")}</select>`:`<input name="${x.k}" type="${x.t||"text"}" ${x.t=="number"?'step="0.01" min="0"':""} value="${x.v??""}" ${x.r===false?"":"required"}>`}</div>`).join("")+`<div class="seg" style="margin-top:14px"><button type="button" class="ghost" onclick="$('#m').classList.remove('on')">Cancelar</button><button>Salvar</button></div>`;
+const vis=()=>{const v=Object.fromEntries(new FormData(f));fields.forEach(x=>{if(x.if){const d=f.querySelector(`[data-k=${x.k}]`);const s=x.if(v);d.style.display=s?"":"none";d.querySelectorAll("input,select").forEach(e=>e.disabled=!s)}})};
+f.oninput=vis;f.onsubmit=e=>{e.preventDefault();ok(Object.fromEntries(new FormData(f)));save();$("#m").classList.remove("on");render()};$("#m").classList.add("on");vis()}
+function addMov(t,cid){const cc=S.cards.map(c=>[c.id,c.n]);
+const forms=t=="in"?["Pix","Dinheiro","Transferência"]:["Pix","Débito","Crédito","Dinheiro"];
+if(t=="out"&&cid&&!S.cards.length)return alert("Cadastre um cartão primeiro.");
+form(t=="in"?"Nova entrada":"Nova saída",[{k:"v",l:"Valor (R$)",t:"number"},{k:"c",l:"Categoria",o:CATS},{k:"f",l:"Forma",o:forms,v:""},{k:"card",l:"Cartão",o:cc.length?cc:[["","Cadastre um cartão"]],if:v=>v.f=="Crédito"},{k:"p",l:"Parcelas",t:"number",v:1,if:v=>v.f=="Crédito"},{k:"desc",l:"Descrição",r:false},{k:"d",l:"Data",t:"date",v:ym==today().slice(0,7)?today():ym+"-01"}],
+r=>{if(r.f=="Crédito"&&!r.card){alert("Cadastre um cartão primeiro.");return}S.mov.push({id:id(),t,v:+r.v,c:r.c,f:r.f,card:r.f=="Crédito"?r.card:"",p:r.f=="Crédito"?Math.max(1,+r.p||1):1,desc:r.desc,d:r.d})});
+if(cid){const s=$("#f [name=f]");s.value="Crédito";$("#f [name=card]").value=cid;$("#f").dispatchEvent(new Event("input"))}}
+function addCard(){form("Novo cartão",[{k:"n",l:"Instituição",},{k:"dv",l:"Dia do vencimento",t:"number"},{k:"l",l:"Limite (R$)",t:"number"}],r=>S.cards.push({id:id(),n:r.n,dv:r.dv,l:+r.l}))}
+function addInv(g){form(g=="Reserva"?"Nova reserva":"Novo investimento",[{k:"n",l:"Nome"},{k:"tp",l:"Tipo",o:INVS},{k:"v",l:"Valor (R$)",t:"number"},{k:"tx",l:"Rentabilidade (ex.: 100% do CDI)",r:false}],r=>S.inv.push({id:id(),g,n:r.n,tp:r.tp,v:+r.v,tx:r.tx}))}
+function addGoal(){form("Nova meta ou desejo",[{k:"tp",l:"Tipo",o:["Meta","Desejo"]},{k:"n",l:"Nome"},{k:"v",l:"Valor alvo (R$)",t:"number"},{k:"s",l:"Já guardado (R$)",t:"number",v:0},{k:"pz",l:"Prazo",t:"date",r:false}],r=>S.goals.push({id:id(),tp:r.tp,n:r.n,v:+r.v,s:+r.s,pz:r.pz}))}
+function addSaved(i){form("Guardar para a meta",[{k:"a",l:"Valor (R$)",t:"number"}],r=>{S.goals.find(g=>g.id==i).s+=+r.a})}
+render();
+(async()=>{try{sample=await claude.use("sample");if(tab=="tips")render()}catch(e){}})();
+</script></body></html>
